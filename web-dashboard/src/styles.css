@@ -304,3 +304,38 @@ th {
     text-align: left;
   }
 }
+
+.status-pill.routine-monitoring {
+  color: #2dcf85;
+  border-color: #2dcf85;
+}
+
+.status-pill.monitor-closely {
+  color: #f7b731;
+  border-color: #f7b731;
+}
+
+.status-pill.schedule-inspection {
+  color: #ff7b59;
+  border-color: #ff7b59;
+}
+
+.status-pill.urgent-inspection {
+  color: #ff4d4f;
+  border-color: #ff4d4f;
+}
+
+.anomaly-block {
+  margin-top: 0.8rem;
+}
+
+.anomaly-block h4 {
+  margin: 0 0 0.45rem;
+  font-size: 0.9rem;
+}
+
+.anomaly-block ul {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: #c8d5ef;
+}

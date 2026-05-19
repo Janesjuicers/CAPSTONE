@@ -1,15 +1,17 @@
 # Bridge Health Dashboard (Local Prototype)
 
-Interactive React dashboard prototype for simulated bridge structural health monitoring.
+Interactive React dashboard prototype for concrete girder / beam bridge structural health monitoring.
 
 ## Features
-- Simulated live sensor streams (strain, stress, axial force, deflection)
-- Live trend chart with rolling data history
-- Bridge health risk assessment panel
-- Member condition table and alert list
-- Bridge schematic with condition highlighting
-- Camera feed placeholder panel
-- Start/stop simulation controls
+- Simulated live critical channels: critical strain, support displacement above bearing, and abutment / retaining wall tilt.
+- Anomaly interpretation aligned with supervisor guidance:
+  - spike with no load/event,
+  - continuously high reading,
+  - tilt drift.
+- Maintenance / inspection status colour coding.
+- Live trend chart with rolling data history.
+- Bridge schematic and reference site photo panel.
+- Start/stop simulation controls.
 
 ## Run locally
 ```bash
@@ -19,8 +21,3 @@ npm run dev
 ```
 
 Open the local URL printed by Vite (usually `http://localhost:5173`).
-
-## Presentation tips
-- Keep simulation running in live mode to demonstrate trend changes.
-- Click **Stop Simulation** to freeze a snapshot and discuss readings.
-- Resize the browser window to show responsive behaviour.
