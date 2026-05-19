@@ -52,9 +52,9 @@ export default function App() {
 
       <section className="metrics-grid">
         <MetricCard title="Critical Strain" value={latest.criticalStrain.toFixed(1)} unit="με" />
-        <MetricCard title="Deflection / Displacement" value={latest.midSpanDisplacement.toFixed(3)} unit="mm" />
         <MetricCard title="Support Displacement Above Bearing" value={latest.supportDisplacement.toFixed(3)} unit="mm" />
         <MetricCard title="Abutment / Wall Tilt" value={latest.abutmentTilt.toFixed(3)} unit="°" />
+        <MetricCard title="Maintenance Status" value={latest.maintenanceLevel} unit="" />
         <MetricCard title="Anomaly Status" value={status.level} unit="" tone={toneFromLevel(status.level)} />
       </section>
 

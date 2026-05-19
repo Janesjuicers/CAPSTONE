@@ -17,7 +17,6 @@ export default function LiveChart({ history }) {
             <Tooltip contentStyle={{ backgroundColor: '#0f1525', border: '1px solid #334365' }} />
             <Legend wrapperStyle={{ color: '#dce5ff', fontSize: 12 }} />
             <Line type="monotone" dataKey="criticalStrain" name="Critical Strain (με)" stroke="#4da3ff" dot={false} strokeWidth={2} />
-            <Line type="monotone" dataKey="midSpanDisplacement" name="Deflection (mm)" stroke="#ff7cb8" dot={false} strokeWidth={2} />
             <Line type="monotone" dataKey="supportDisplacement" name="Support Disp. above bearing (mm)" stroke="#68f8d8" dot={false} strokeWidth={2} />
             <Line type="monotone" dataKey="abutmentTilt" name="Abutment tilt (deg)" stroke="#ffa658" dot={false} strokeWidth={2} />
           </LineChart>

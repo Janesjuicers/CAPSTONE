@@ -3,7 +3,7 @@
 Interactive React dashboard prototype for concrete girder / beam bridge structural health monitoring.
 
 ## Features
-- Simulated live critical channels: critical strain, deflection/displacement, support displacement above bearing, and abutment tilt.
+- Simulated live critical channels: critical strain, support displacement above bearing, and abutment / retaining wall tilt.
 - Anomaly interpretation aligned with supervisor guidance:
   - spike with no load/event,
   - continuously high reading,

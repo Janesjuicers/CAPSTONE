@@ -66,7 +66,6 @@ function createBridgePoint({ timestamp = Date.now(), simTime = 0, previousPoint 
   const effectiveLoad = clamp(loadLevel + eventBoost, 0.2, 1.45);
 
   const criticalStrain = Number((95 + effectiveLoad * 110 + randomInRange(-6, 6)).toFixed(1));
-  const midSpanDisplacement = Number((0.9 + effectiveLoad * 2.3 + randomInRange(-0.08, 0.08)).toFixed(3));
   const supportDisplacement = Number((0.25 + effectiveLoad * 1.2 + randomInRange(-0.05, 0.05)).toFixed(3));
 
   const previousTilt = previousPoint?.abutmentTilt ?? 0.08;
@@ -84,7 +83,6 @@ function createBridgePoint({ timestamp = Date.now(), simTime = 0, previousPoint 
   const rawSeverity =
     (criticalStrain - 90) * 0.42 +
     supportDisplacement * 18 +
-    midSpanDisplacement * 10 +
     abutmentTilt * 95 +
     (highReadingDurationSec >= 12 ? 14 : 0);
 
@@ -94,7 +92,6 @@ function createBridgePoint({ timestamp = Date.now(), simTime = 0, previousPoint 
     simTime,
     loadEvent,
     criticalStrain,
-    midSpanDisplacement,
     supportDisplacement,
     abutmentTilt,
     tiltDriftRate,
