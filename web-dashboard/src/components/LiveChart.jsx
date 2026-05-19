@@ -1,24 +1,24 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 
-export default function LiveChart({ history }) {
+export default function LiveChart({ history, title, subtitle, dataKey, color, unit }) {
   return (
-    <section className="card chart-panel">
+    <section className="card chart-panel mini-chart-panel">
       <header>
-        <h3>Live Bridge Signals</h3>
-        <p>Critical channels for the concrete girder bridge (updated every second)</p>
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
       </header>
 
-      <div className="chart-wrap">
+      <div className="chart-wrap mini-chart-wrap">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={history} margin={{ top: 10, right: 22, left: 5, bottom: 4 }}>
+          <LineChart data={history} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-            <XAxis dataKey="time" tick={{ fill: '#c6d2ed', fontSize: 11 }} minTickGap={20} />
-            <YAxis tick={{ fill: '#c6d2ed', fontSize: 11 }} width={45} />
-            <Tooltip contentStyle={{ backgroundColor: '#0f1525', border: '1px solid #334365' }} />
-            <Legend wrapperStyle={{ color: '#dce5ff', fontSize: 12 }} />
-            <Line type="monotone" dataKey="criticalStrain" name="Critical Strain (με)" stroke="#4da3ff" dot={false} strokeWidth={2} />
-            <Line type="monotone" dataKey="supportDisplacement" name="Support Disp. above bearing (mm)" stroke="#68f8d8" dot={false} strokeWidth={2} />
-            <Line type="monotone" dataKey="abutmentTilt" name="Abutment tilt (deg)" stroke="#ffa658" dot={false} strokeWidth={2} />
+            <XAxis dataKey="time" tick={{ fill: '#c6d2ed', fontSize: 10 }} minTickGap={24} />
+            <YAxis tick={{ fill: '#c6d2ed', fontSize: 10 }} width={42} />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#0f1525', border: '1px solid #334365' }}
+              formatter={(value) => [`${value} ${unit}`, title]}
+            />
+            <Line type="monotone" dataKey={dataKey} name={title} stroke={color} dot={false} strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </div>

@@ -50,16 +50,39 @@ export default function App() {
         </div>
       </header>
 
-      <section className="metrics-grid">
+      <section className="metrics-grid single-emphasis">
         <MetricCard title="Critical Strain" value={latest.criticalStrain.toFixed(1)} unit="με" />
-        <MetricCard title="Support Displacement Above Bearing" value={latest.supportDisplacement.toFixed(3)} unit="mm" />
-        <MetricCard title="Abutment / Wall Tilt" value={latest.abutmentTilt.toFixed(3)} unit="°" />
         <MetricCard title="Maintenance Status" value={latest.maintenanceLevel} unit="" />
         <MetricCard title="Anomaly Status" value={status.level} unit="" tone={toneFromLevel(status.level)} />
       </section>
 
       <section className="primary-grid">
-        <LiveChart history={history} />
+        <section className="mini-charts-grid">
+          <LiveChart
+            history={history}
+            title="Critical Strain Over Time"
+            subtitle="Primary engineering signal"
+            dataKey="criticalStrain"
+            color="#4da3ff"
+            unit="με"
+          />
+          <LiveChart
+            history={history}
+            title="Support Displacement Above Bearing"
+            subtitle="Relative support movement trend"
+            dataKey="supportDisplacement"
+            color="#68f8d8"
+            unit="mm"
+          />
+          <LiveChart
+            history={history}
+            title="Abutment / Wall Tilt Over Time"
+            subtitle="Abutment and retaining wall drift"
+            dataKey="abutmentTilt"
+            color="#ffa658"
+            unit="°"
+          />
+        </section>
 
         <section className="right-stack">
           <article className="card risk-panel" style={{ borderColor: status.color }}>
@@ -68,6 +91,11 @@ export default function App() {
               {status.level}
             </p>
             <p>{status.text}</p>
+            <ul className="guidance-list">
+              <li>Spike without load/event → possible permanent deflection or local damage.</li>
+              <li>Continuously high reading → possible sensor fault or structural issue.</li>
+              <li>Tilt drift trend → possible abutment or soil movement.</li>
+            </ul>
           </article>
 
           <article className="card alert-panel">
@@ -79,15 +107,34 @@ export default function App() {
             <p>High-reading duration: {latest.highReadingDurationSec}s</p>
             <p>Tilt drift rate: {latest.tiltDriftRate.toFixed(3)}°/s</p>
           </article>
-
-          <article className="card camera-panel">
-            <h3>Reference Site Photo</h3>
-            <div className="camera-frame">
-              <img src="/bridge.jpg" alt="Actual bridge underside showing concrete girder beams" />
-            </div>
-            <p className="camera-caption">Use this panel to keep schematic placement aligned with real bridge geometry and sensor locations.</p>
-          </article>
         </section>
+      </section>
+
+      <section className="image-grid">
+        <article className="card image-panel">
+          <h3>Bridge Overview</h3>
+          <div className="camera-frame">
+            <img src="/bridge-overview.jpg" alt="Bridge overview" />
+          </div>
+        </article>
+        <article className="card image-panel">
+          <h3>Bridge Underside</h3>
+          <div className="camera-frame">
+            <img src="/bridge-underside.jpg" alt="Bridge underside and girders" />
+          </div>
+        </article>
+        <article className="card image-panel">
+          <h3>Support Displacement Sensor</h3>
+          <div className="camera-frame">
+            <img src="/displacement-sensor.jpg" alt="Support displacement sensor above bearing" />
+          </div>
+        </article>
+        <article className="card image-panel">
+          <h3>Critical Strain Sensor</h3>
+          <div className="camera-frame">
+            <img src="/strain-gauge.jpg" alt="Critical strain gauge installation" />
+          </div>
+        </article>
       </section>
 
       <section className="bottom-grid">
