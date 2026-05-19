@@ -81,7 +81,7 @@ body {
 .metrics-grid {
   margin-top: 0.9rem;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.8rem;
 }
 
@@ -279,9 +279,29 @@ th {
   margin: 0.55rem 0 0;
 }
 
+
+.image-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.image-panel {
+  padding: 0.9rem;
+}
+
+.image-panel h3 {
+  margin: 0;
+}
+
 @media (max-width: 1200px) {
   .metrics-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .primary-grid,
@@ -292,7 +312,11 @@ th {
 
 @media (max-width: 760px) {
   .metrics-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
+  }
+
+  .image-grid {
+    grid-template-columns: 1fr;
   }
 
   .top-header {
@@ -337,5 +361,31 @@ th {
 .anomaly-block ul {
   margin: 0;
   padding-left: 1.15rem;
+  color: #c8d5ef;
+}
+
+
+.single-emphasis .metric-card:first-child .metric-value {
+  font-size: 1.9rem;
+}
+
+.mini-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+}
+
+.mini-chart-panel {
+  padding: 0.85rem;
+}
+
+.mini-chart-wrap {
+  height: 200px;
+}
+
+
+.guidance-list {
+  margin: 0.6rem 0 0;
+  padding-left: 1.1rem;
   color: #c8d5ef;
 }
