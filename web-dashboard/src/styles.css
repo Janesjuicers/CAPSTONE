@@ -279,6 +279,22 @@ th {
   margin: 0.55rem 0 0;
 }
 
+
+.image-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.image-panel {
+  padding: 0.9rem;
+}
+
+.image-panel h3 {
+  margin: 0;
+}
+
 @media (max-width: 1200px) {
   .metrics-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -367,20 +383,6 @@ th {
   height: 200px;
 }
 
-.image-grid {
-  margin-top: 0.9rem;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.8rem;
-}
-
-.image-panel {
-  padding: 0.9rem;
-}
-
-.image-panel h3 {
-  margin: 0;
-}
 
 .guidance-list {
   margin: 0.6rem 0 0;
