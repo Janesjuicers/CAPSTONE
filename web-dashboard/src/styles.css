@@ -389,3 +389,34 @@ th {
   padding-left: 1.1rem;
   color: #c8d5ef;
 }
+
+.control-row {
+  display: flex;
+  gap: 0.45rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.scenario-banner {
+  margin-top: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  border-color: rgba(104, 248, 216, 0.45);
+}
+
+.scenario-label {
+  margin: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #83b5ff;
+}
+
+.scenario-banner h2 {
+  margin: 0.3rem 0;
+  font-size: 1.2rem;
+}
+
+.scenario-banner p {
+  margin: 0;
+  color: #bfcae4;
+}

@@ -3,7 +3,7 @@ import MetricCard from './components/MetricCard';
 import LiveChart from './components/LiveChart';
 import MemberTable from './components/MemberTable';
 import BridgeSchematic from './components/BridgeSchematic';
-import { MAX_POINTS, createInitialHistory, evaluateStatus, nextDataPoint } from './data/simulator';
+import { MAX_POINTS, createInitialHistory, evaluateStatus, jumpToScenario, nextDataPoint, scenarioCatalog } from './data/simulator';
 
 function toneFromLevel(level) {
   if (level === 'Critical') return 'danger';
@@ -15,6 +15,7 @@ function toneFromLevel(level) {
 export default function App() {
   const [isRunning, setIsRunning] = useState(true);
   const [history, setHistory] = useState(() => createInitialHistory());
+  const scenarios = useMemo(() => scenarioCatalog(), []);
 
   useEffect(() => {
     if (!isRunning) return undefined;
@@ -43,12 +44,34 @@ export default function App() {
         </div>
 
         <div className="actions">
-          <button className={`run-toggle ${isRunning ? 'live' : ''}`} onClick={() => setIsRunning((x) => !x)}>
-            {isRunning ? 'Stop Simulation' : 'Start Simulation'}
-          </button>
+          <div className="control-row">
+            <button className={`run-toggle ${isRunning ? 'live' : ''}`} onClick={() => setIsRunning((x) => !x)}>
+              {isRunning ? 'Pause Simulation' : 'Resume Simulation'}
+            </button>
+            <button className="run-toggle" onClick={() => setHistory(createInitialHistory())}>Reset</button>
+            <button
+              className="run-toggle"
+              onClick={() =>
+                setHistory((existing) => {
+                  const latestPoint = existing[existing.length - 1];
+                  const nextScenarioIndex = (scenarios.findIndex((s) => s.id === latestPoint.scenarioId) + 1) % scenarios.length;
+                  const jumped = jumpToScenario(latestPoint, nextScenarioIndex);
+                  return [...existing.slice(-MAX_POINTS + 1), jumped];
+                })
+              }
+            >
+              Next Scenario
+            </button>
+          </div>
           <p className="clock">Last update: {latest.time}</p>
         </div>
       </header>
+
+      <section className="scenario-banner card">
+        <p className="scenario-label">Current Scenario</p>
+        <h2>{latest.scenarioLabel}</h2>
+        <p>Step {latest.scenarioTick + 1} in current phase · Loop tick {latest.globalTick}</p>
+      </section>
 
       <section className="metrics-grid single-emphasis">
         <MetricCard title="Critical Strain" value={latest.criticalStrain.toFixed(1)} unit="με" />
