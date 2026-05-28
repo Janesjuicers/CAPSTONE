@@ -420,3 +420,270 @@ th {
   margin: 0;
   color: #bfcae4;
 }
+
+/* Two-tab traffic-light dashboard refinements */
+.tab-bar {
+  margin-top: 0.9rem;
+  padding: 0.45rem;
+  display: inline-flex;
+  gap: 0.45rem;
+}
+
+.tab-bar button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #c7d4ef;
+  padding: 0.58rem 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.tab-bar button.active {
+  background: #1b3154;
+  border-color: #4d79bd;
+  color: #fff;
+}
+
+.tab-content {
+  margin-top: 0.9rem;
+}
+
+.overview-metrics {
+  grid-template-columns: 1.15fr repeat(3, minmax(0, 1fr));
+}
+
+.metric-value span {
+  display: block;
+  margin: 0.2rem 0 0;
+  line-height: 1.25;
+}
+
+.tone-muted {
+  border-color: rgba(141, 150, 168, 0.7);
+}
+
+.overall-status {
+  margin-top: 0.9rem;
+  padding: 0.9rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.overall-status h2,
+.overall-status p {
+  margin: 0.25rem 0 0;
+}
+
+.traffic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.32rem 0.62rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.traffic-badge.compact {
+  padding: 0.22rem 0.46rem;
+  font-size: 0.75rem;
+}
+
+.traffic-dot,
+.driver-light {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  display: inline-block;
+  background: currentColor;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.traffic-green {
+  color: #2dcf85;
+}
+
+.traffic-amber {
+  color: #f7b731;
+}
+
+.traffic-red {
+  color: #ff4d4f;
+}
+
+.traffic-grey {
+  color: #8d96a8;
+}
+
+.scenario-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.scenario-progress-block {
+  min-width: 250px;
+  text-align: right;
+}
+
+.scenario-progress-block strong {
+  display: block;
+  font-size: 1.35rem;
+}
+
+.scenario-progress-block span {
+  display: block;
+  color: #afc0e3;
+  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
+}
+
+.scenario-progress-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(143, 174, 255, 0.16);
+  border: 1px solid rgba(143, 174, 255, 0.2);
+}
+
+.scenario-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2dcf85, #f7b731, #ff7b59);
+  transition: width 220ms linear;
+}
+
+.why-panel,
+.diagnostic-guide {
+  padding: 0.9rem;
+}
+
+.why-panel h3,
+.diagnostic-guide h3 {
+  margin: 0 0 0.5rem;
+}
+
+.driver-list,
+.diagnostic-guide ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.driver-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.55rem;
+  align-items: start;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(139, 163, 214, 0.16);
+}
+
+.driver-list li:last-child {
+  border-bottom: 0;
+}
+
+.driver-list p,
+.small-muted {
+  margin: 0.15rem 0 0;
+  color: #afc0e3;
+  font-size: 0.84rem;
+}
+
+.diagnostic-guide li {
+  color: #c8d5ef;
+  font-size: 0.84rem;
+  margin-top: 0.35rem;
+}
+
+.bridge-sensors-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.schematic-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+
+.schematic-header p {
+  margin: 0.25rem 0 0;
+  color: #afc0e3;
+  font-size: 0.85rem;
+}
+
+.bridge-svg {
+  height: 360px;
+}
+
+.critical-sensor circle:first-child {
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+.live-readings-panel td strong,
+.live-readings-panel td span {
+  display: block;
+}
+
+.live-readings-panel td span:not(.traffic-badge):not(.traffic-dot) {
+  margin-top: 0.18rem;
+  color: #9fb0d4;
+  font-size: 0.78rem;
+}
+
+.critical-row {
+  background: rgba(247, 183, 49, 0.08);
+}
+
+.sensors-images {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1200px) {
+  .overview-metrics,
+  .bridge-sensors-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bridge-sensors-grid .schematic-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .scenario-banner,
+  .overall-status,
+  .schematic-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .scenario-progress-block {
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .overview-metrics,
+  .bridge-sensors-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-bar {
+    display: flex;
+  }
+
+  .tab-bar button {
+    flex: 1;
+  }
+}
