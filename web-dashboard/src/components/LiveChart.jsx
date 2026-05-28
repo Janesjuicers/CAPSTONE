@@ -12,13 +12,14 @@ export default function LiveChart({ history, title, subtitle, dataKey, color, un
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={history} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-            <XAxis dataKey="time" tick={{ fill: '#c6d2ed', fontSize: 10 }} minTickGap={24} />
-            <YAxis tick={{ fill: '#c6d2ed', fontSize: 10 }} width={42} />
+            <XAxis dataKey="scenarioTick" tick={{ fill: '#c6d2ed', fontSize: 10 }} minTickGap={18} label={{ value: 'seconds in scenario', position: 'insideBottomRight', fill: '#8fa1c6', fontSize: 10 }} />
+            <YAxis tick={{ fill: '#c6d2ed', fontSize: 10 }} width={42} domain={['auto', 'auto']} />
             <Tooltip
               contentStyle={{ backgroundColor: '#0f1525', border: '1px solid #334365' }}
+              labelFormatter={(_, payload) => payload?.[0]?.payload ? `${payload[0].payload.scenarioLabel} · t=${payload[0].payload.scenarioTick}s` : ''}
               formatter={(value) => [`${value} ${unit}`, title]}
             />
-            <Line type="monotone" dataKey={dataKey} name={title} stroke={color} dot={false} strokeWidth={2} />
+            <Line type="linear" dataKey={dataKey} name={title} stroke={color} dot={false} activeDot={{ r: 4 }} strokeWidth={2} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
