@@ -1,11 +1,55 @@
-export const MAX_POINTS = 34;
+export const MAX_POINTS = 40;
 
 const DEFAULT_POINTS = 22;
 const SCENARIOS = [
-  { id: 'baseline', label: 'Scenario 1: Normal Baseline', durationSec: 26 },
-  { id: 'load_event', label: 'Scenario 2: Load Event (Normal Transient)', durationSec: 18 },
-  { id: 'persistent_high', label: 'Scenario 3: Persistent High Reading', durationSec: 22 },
-  { id: 'tilt_drift', label: 'Scenario 4: Tilt Drift', durationSec: 24 }
+  {
+    id: 'baseline',
+    label: 'Scenario 1: Normal Baseline',
+    durationSec: 34,
+    assumption: 'No significant live load; normal operating baseline.'
+  },
+  {
+    id: 'load_event',
+    label: 'Scenario 2: Two-Truck Service Load',
+    durationSec: 34,
+    assumption: 'Two representative heavy trucks crossing in sequence.'
+  },
+  {
+    id: 'persistent_high',
+    label: 'Scenario 3: Sustained High Strain',
+    durationSec: 36,
+    assumption: 'Sustained abnormal strain response.'
+  },
+  {
+    id: 'tilt_drift',
+    label: 'Scenario 4: Abutment / Wall Movement',
+    durationSec: 36,
+    assumption: 'Gradual abutment / soil / retaining wall movement.'
+  }
+];
+
+export const THRESHOLD_GUIDE = [
+  {
+    metric: 'Critical strain',
+    unit: 'με',
+    green: '< 165',
+    amber: '165–204 or ≥5s',
+    red: '≥205 or ≥10s'
+  },
+  {
+    metric: 'Support displacement above bearing',
+    unit: 'mm',
+    green: '< 0.900',
+    amber: '0.900–1.119 or ≥5s',
+    red: '≥1.120 or ≥9s'
+  },
+  {
+    metric: 'Abutment / wall tilt',
+    unit: '°',
+    green: '< 0.220',
+    amber: '0.220–0.339 or drift ≥0.009°/s',
+    red: '≥0.340 or drift ≥0.025°/s'
+  }
 ];
 
 const LOOP_SECONDS = SCENARIOS.reduce((sum, scenario) => sum + scenario.durationSec, 0);
@@ -25,12 +69,8 @@ function stableNoise(tick, phase = 0, magnitude = 1) {
   return (Math.sin((tick + phase) * 1.19) * 0.42 + Math.sin((tick + phase) * 0.47) * 0.38 + Math.sin((tick + phase) * 2.11) * 0.2) * magnitude;
 }
 
-function smoothPulse(progress, risePoint = 0.34, fallPoint = 0.72) {
-  const rise = clamp(progress / risePoint, 0, 1);
-  const fall = clamp((1 - progress) / (1 - fallPoint), 0, 1);
-  const shapedRise = rise * rise * (3 - 2 * rise);
-  const shapedFall = fall * fall * (3 - 2 * fall);
-  return Math.min(shapedRise, shapedFall);
+function bellPulse(progress, center, width) {
+  return Math.exp(-Math.pow((progress - center) / width, 2));
 }
 
 function getScenarioState(globalTick) {
@@ -60,56 +100,57 @@ function getScenarioState(globalTick) {
 
 function scenarioMetrics(state, globalTick) {
   const natural = stableNoise(globalTick, 1, 1);
-  const localRipple = Math.sin(state.scenarioTick * 0.7) * 0.8;
+  const localRipple = Math.sin(state.scenarioTick * 0.42) * 0.35;
 
   if (state.id === 'baseline') {
     return {
-      loadEvent: 'none',
-      strainLeft: 112 + natural * 1.2 + localRipple * 0.5,
-      strainMidspan: 119 + stableNoise(globalTick, 6, 1.5),
-      strainRight: 110 + stableNoise(globalTick, 11, 1.1) - localRipple * 0.35,
-      supportDisplacement: 0.62 + stableNoise(globalTick, 3, 0.018),
-      abutmentTilt: 0.11 + stableNoise(globalTick, 8, 0.002)
+      loadEvent: 'none - stable operating baseline',
+      strainLeft: 112 + natural * 0.35 + localRipple * 0.2,
+      strainMidspan: 119 + stableNoise(globalTick, 6, 0.45),
+      strainRight: 110 + stableNoise(globalTick, 11, 0.35) - localRipple * 0.15,
+      supportDisplacement: 0.62 + stableNoise(globalTick, 3, 0.006),
+      abutmentTilt: 0.11 + stableNoise(globalTick, 8, 0.0007)
     };
   }
 
   if (state.id === 'load_event') {
-    const vehiclePulse = smoothPulse(state.progress, 0.32, 0.7);
-    const recoveryTail = state.progress > 0.7 ? Math.exp(-(state.scenarioTick - state.durationSec * 0.7) / 2.5) * 0.08 : 0;
-    const transient = vehiclePulse + recoveryTail;
+    const firstTruck = bellPulse(state.progress, 0.32, 0.11);
+    const secondTruck = bellPulse(state.progress, 0.62, 0.12);
+    const recovery = state.progress > 0.72 ? Math.exp(-(state.progress - 0.72) * 12) * 0.08 : 0;
+    const transient = firstTruck * 0.95 + secondTruck + recovery;
     return {
-      loadEvent: 'normal load response - transient response with expected recovery',
-      strainLeft: 117 + transient * 17 + stableNoise(globalTick, 2, 0.9),
-      strainMidspan: 123 + transient * 35 + stableNoise(globalTick, 5, 1.0),
-      strainRight: 116 + transient * 16 + stableNoise(globalTick, 9, 0.9),
-      supportDisplacement: 0.65 + transient * 0.12 + stableNoise(globalTick, 4, 0.01),
-      abutmentTilt: 0.112 + stableNoise(globalTick, 10, 0.0016)
+      loadEvent: 'normal transient/service load response - two representative heavy trucks crossing in sequence with expected recovery',
+      strainLeft: 116 + transient * 13 + stableNoise(globalTick, 2, 0.45),
+      strainMidspan: 122 + transient * 29 + stableNoise(globalTick, 5, 0.5),
+      strainRight: 115 + transient * 12 + stableNoise(globalTick, 9, 0.45),
+      supportDisplacement: 0.65 + transient * 0.095 + stableNoise(globalTick, 4, 0.006),
+      abutmentTilt: 0.112 + stableNoise(globalTick, 10, 0.0008)
     };
   }
 
   if (state.id === 'persistent_high') {
-    const ramp = 1 - Math.exp(-state.scenarioTick / 3.8);
-    const plateau = 0.94 + Math.sin(state.scenarioTick * 0.18) * 0.025;
+    const ramp = 1 - Math.exp(-state.scenarioTick / 5.5);
+    const plateau = 0.96 + Math.sin(state.scenarioTick * 0.15) * 0.018;
     const hold = ramp * plateau;
     return {
-      loadEvent: 'none - elevated strain reading persists',
-      strainLeft: 150 + hold * 30 + stableNoise(globalTick, 1, 0.9),
-      strainMidspan: 169 + hold * 43 + stableNoise(globalTick, 4, 1.0),
-      strainRight: 147 + hold * 28 + stableNoise(globalTick, 7, 0.9),
-      supportDisplacement: 0.8 + hold * 0.2 + stableNoise(globalTick, 12, 0.009),
-      abutmentTilt: 0.13 + stableNoise(globalTick, 14, 0.0016)
+      loadEvent: 'none - sustained abnormal strain response',
+      strainLeft: 139 + hold * 26 + stableNoise(globalTick, 1, 0.55),
+      strainMidspan: 166 + hold * 48 + stableNoise(globalTick, 4, 0.7),
+      strainRight: 136 + hold * 22 + stableNoise(globalTick, 7, 0.55),
+      supportDisplacement: 0.78 + hold * 0.16 + stableNoise(globalTick, 12, 0.006),
+      abutmentTilt: 0.132 + stableNoise(globalTick, 14, 0.0008)
     };
   }
 
   const drift = state.progress;
   const driftCurve = drift * drift * (3 - 2 * drift);
   return {
-    loadEvent: 'none - wall tilt drift accumulating',
-    strainLeft: 121 + stableNoise(globalTick, 2, 0.8),
-    strainMidspan: 127 + Math.sin(state.scenarioTick * 0.18) * 1.2 + stableNoise(globalTick, 4, 0.8),
-    strainRight: 121 + stableNoise(globalTick, 9, 0.8),
-    supportDisplacement: 0.74 + driftCurve * 0.17 + stableNoise(globalTick, 6, 0.009),
-    abutmentTilt: 0.165 + driftCurve * 0.285 + stableNoise(globalTick, 13, 0.0018)
+    loadEvent: 'none - abutment / soil / retaining wall movement accumulating',
+    strainLeft: 119 + driftCurve * 6 + stableNoise(globalTick, 2, 0.45),
+    strainMidspan: 124 + driftCurve * 8 + Math.sin(state.scenarioTick * 0.16) * 0.7 + stableNoise(globalTick, 4, 0.45),
+    strainRight: 120 + driftCurve * 5 + stableNoise(globalTick, 9, 0.45),
+    supportDisplacement: 0.76 + driftCurve * 0.18 + stableNoise(globalTick, 6, 0.006),
+    abutmentTilt: 0.18 + driftCurve * 0.21 + stableNoise(globalTick, 13, 0.001)
   };
 }
 
@@ -186,7 +227,7 @@ function detectAnomalies(point) {
     return [
       {
         code: 'NORMAL_LOAD_RESPONSE',
-        message: 'Normal load response: a short transient response is recovering as expected after the simulated vehicle crossing.',
+        message: 'Normal transient/service load response: two representative heavy trucks are crossing in sequence and the readings recover as expected.',
         severity: 24
       }
     ];
@@ -196,18 +237,19 @@ function detectAnomalies(point) {
     return [
       {
         code: 'CONTINUOUS_HIGH',
-        message: 'Midspan strain remains elevated without a load event, so schedule inspection and verify sensor bonding/calibration.',
+        message: 'Midspan strain is the dominant elevated reading without a load event, so schedule inspection and verify sensor bonding/calibration.',
         severity: 76
       }
     ];
   }
 
   if (point.scenarioId === 'tilt_drift') {
+    const severity = point.abutmentTilt >= 0.34 ? 90 : point.abutmentTilt >= 0.22 ? 76 : 58;
     return [
       {
         code: 'TILT_DRIFT',
         message: 'Abutment / retaining wall tilt is the dominant abnormal signal and is drifting upward over time.',
-        severity: 90
+        severity
       }
     ];
   }
@@ -235,12 +277,12 @@ function selectDominantIssue(point, sensorStatuses) {
   ];
 
   if (point.scenarioId === 'tilt_drift') {
-    candidates.find((candidate) => candidate.key === 'abutmentTilt').score += 90;
-    candidates.find((candidate) => candidate.key === 'supportDisplacement').score += 20;
+    candidates.find((candidate) => candidate.key === 'abutmentTilt').score += 160;
+    candidates.find((candidate) => candidate.key === 'supportDisplacement').score += 15;
   }
 
   if (point.scenarioId === 'persistent_high') {
-    candidates.find((candidate) => candidate.key === point.criticalSensorKey).score += 80;
+    candidates.find((candidate) => candidate.key === 'strainMidspan').score += 100;
   }
 
   if (point.scenarioId === 'baseline' || point.scenarioId === 'load_event') {
@@ -276,6 +318,7 @@ function createBridgePoint(globalTick = 0, previousPoint) {
     scenarioLabel: scenario.label,
     scenarioTick: scenario.scenarioTick,
     scenarioDurationSec: scenario.durationSec,
+    scenarioAssumption: scenario.assumption,
     scenarioRemainingSec: scenario.remainingSec,
     nextScenarioLabel: scenario.nextScenarioLabel,
     nextScenarioInSec: scenario.nextScenarioInSec,
