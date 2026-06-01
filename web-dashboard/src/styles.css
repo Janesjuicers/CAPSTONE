@@ -567,17 +567,16 @@ th {
 }
 
 .why-panel,
-.diagnostic-guide {
+.threshold-guide {
   padding: 0.9rem;
 }
 
 .why-panel h3,
-.diagnostic-guide h3 {
+.threshold-guide h3 {
   margin: 0 0 0.5rem;
 }
 
-.driver-list,
-.diagnostic-guide ul {
+.driver-list {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -603,10 +602,45 @@ th {
   font-size: 0.84rem;
 }
 
-.diagnostic-guide li {
+.scenario-assumption {
+  margin-top: 0.45rem !important;
+  color: #d7e4ff !important;
+  font-size: 0.9rem;
+}
+
+.threshold-grid {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.threshold-row {
+  display: grid;
+  grid-template-columns: 1.15fr 0.72fr 1.08fr 0.95fr;
+  gap: 0.45rem;
+  align-items: start;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid rgba(139, 163, 214, 0.16);
   color: #c8d5ef;
-  font-size: 0.84rem;
-  margin-top: 0.35rem;
+  font-size: 0.78rem;
+}
+
+.threshold-row:last-child {
+  border-bottom: 0;
+}
+
+.threshold-head {
+  padding-top: 0;
+  color: #edf3ff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.threshold-row em {
+  color: #9fb0d4;
+  font-style: normal;
 }
 
 .bridge-sensors-grid {
@@ -679,6 +713,10 @@ th {
     width: 100%;
     min-width: 0;
     text-align: left;
+  }
+
+  .threshold-row {
+    grid-template-columns: 1fr;
   }
 
   .overview-metrics,

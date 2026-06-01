@@ -3,7 +3,7 @@ import MetricCard from './components/MetricCard';
 import LiveChart from './components/LiveChart';
 import MemberTable from './components/MemberTable';
 import BridgeSchematic from './components/BridgeSchematic';
-import { MAX_POINTS, createInitialHistory, evaluateStatus, jumpToScenario, nextDataPoint, scenarioCatalog } from './data/simulator';
+import { MAX_POINTS, THRESHOLD_GUIDE, createInitialHistory, evaluateStatus, jumpToScenario, nextDataPoint, scenarioCatalog } from './data/simulator';
 
 function toneFromTraffic(statusKey) {
   if (statusKey === 'red') return 'danger';
@@ -32,6 +32,7 @@ function ScenarioProgress({ latest }) {
         <p>
           {latest.scenarioRemainingSec}s remaining · next begins in {latest.nextScenarioInSec}s: {latest.nextScenarioLabel}
         </p>
+        <p className="scenario-assumption">Assumption: {latest.scenarioAssumption}</p>
       </div>
       <div className="scenario-progress-block" aria-label="Scenario timer and progress">
         <strong>{progressPercent}%</strong>
@@ -63,16 +64,27 @@ function WhyStatusPanel({ latest }) {
   );
 }
 
-function DiagnosticGuide() {
+function ThresholdGuide() {
   return (
-    <article className="card diagnostic-guide">
-      <h3>Diagnostic guide</h3>
-      <ul>
-        <li><strong>Green:</strong> readings are in normal simulated operating range.</li>
-        <li><strong>Amber:</strong> observe-only watch state; verify persistence before treating it as an issue.</li>
-        <li><strong>Red:</strong> urgent inspection / critical anomaly rule has been triggered.</li>
-        <li><strong>Grey:</strong> reserved for invalid telemetry or sensor fault readings.</li>
-      </ul>
+    <article className="card threshold-guide">
+      <h3>Threshold reference</h3>
+      <p className="small-muted">Compact Green / Amber / Red limits used by the simulated traffic-light rules.</p>
+      <div className="threshold-grid" role="table" aria-label="Traffic light threshold reference">
+        <div className="threshold-row threshold-head" role="row">
+          <span role="columnheader">Metric</span>
+          <span role="columnheader" className="traffic-green">Green</span>
+          <span role="columnheader" className="traffic-amber">Amber</span>
+          <span role="columnheader" className="traffic-red">Red</span>
+        </div>
+        {THRESHOLD_GUIDE.map((threshold) => (
+          <div className="threshold-row" role="row" key={threshold.metric}>
+            <span role="cell"><strong>{threshold.metric}</strong> <em>({threshold.unit})</em></span>
+            <span role="cell">{threshold.green}</span>
+            <span role="cell">{threshold.amber}</span>
+            <span role="cell">{threshold.red}</span>
+          </div>
+        ))}
+      </div>
     </article>
   );
 }
@@ -207,7 +219,7 @@ export default function App() {
               </article>
 
               <WhyStatusPanel latest={latest} />
-              <DiagnosticGuide />
+              <ThresholdGuide />
             </section>
           </section>
         </main>
