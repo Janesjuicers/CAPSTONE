@@ -29,11 +29,7 @@ export default function MemberTable({ latest }) {
         <tbody>
           {SENSOR_ROWS.map((row) => {
             const status = latest.sensorStatuses[row.key];
-            const isCritical =
-              (row.key === 'strainLeft' && latest.criticalLocation === 'Left support strain gauge') ||
-              (row.key === 'strainMidspan' && latest.criticalLocation === 'Midspan strain gauge') ||
-              (row.key === 'strainRight' && latest.criticalLocation === 'Right support strain gauge') ||
-              (status.key === 'red' && row.key !== 'strainLeft' && row.key !== 'strainMidspan' && row.key !== 'strainRight');
+            const isCritical = row.key === latest.dominantSensorKey;
             return (
               <tr key={row.key} className={isCritical ? 'critical-row' : ''}>
                 <td>

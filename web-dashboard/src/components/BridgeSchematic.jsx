@@ -1,24 +1,21 @@
 const SENSOR_POINTS = [
-  { key: 'strainLeft', label: 'Left support strain', short: 'L strain', unit: 'με', x: 27, y: 43, type: 'strain' },
-  { key: 'strainMidspan', label: 'Midspan strain', short: 'Mid strain', unit: 'με', x: 60, y: 43, type: 'strain' },
-  { key: 'strainRight', label: 'Right support strain', short: 'R strain', unit: 'με', x: 93, y: 43, type: 'strain' },
-  { key: 'supportDisplacement', label: 'Support displacement above bearing', short: 'Bearing disp.', unit: 'mm', x: 101, y: 59, type: 'support' },
-  { key: 'abutmentTilt', label: 'Abutment / wall tilt', short: 'Wall tilt', unit: '°', x: 16, y: 72, type: 'tilt' }
+  { key: 'strainLeft', label: 'Left support strain', short: 'L strain', unit: 'με', x: 27, y: 43, labelX: 14, labelY: 26, labelWidth: 28, type: 'strain' },
+  { key: 'strainMidspan', label: 'Midspan strain', short: 'Mid strain', unit: 'με', x: 60, y: 43, labelX: 47, labelY: 21, labelWidth: 30, type: 'strain' },
+  { key: 'strainRight', label: 'Right support strain', short: 'R strain', unit: 'με', x: 93, y: 43, labelX: 78, labelY: 26, labelWidth: 29, type: 'strain' },
+  { key: 'supportDisplacement', label: 'Support displacement above bearing', short: 'Bearing disp.', unit: 'mm', x: 101, y: 59, labelX: 79, labelY: 63, labelWidth: 34, type: 'support' },
+  { key: 'abutmentTilt', label: 'Abutment / wall tilt', short: 'Wall tilt', unit: '°', x: 16, y: 72, labelX: 27, labelY: 68, labelWidth: 29, type: 'tilt' }
 ];
 
 function formatSensorValue(value, unit) {
   return `${Number(value).toFixed(unit === 'με' ? 1 : 3)} ${unit}`;
 }
 
-function isCriticalPoint(point, latest) {
-  if (point.key === 'strainLeft') return latest.criticalLocation === 'Left support strain gauge';
-  if (point.key === 'strainMidspan') return latest.criticalLocation === 'Midspan strain gauge';
-  if (point.key === 'strainRight') return latest.criticalLocation === 'Right support strain gauge';
-  return latest.sensorStatuses[point.key]?.key === 'red';
+function isDominantPoint(point, latest) {
+  return latest.dominantSensorKey === point.key;
 }
 
 export default function BridgeSchematic({ latest }) {
-  const criticalPoint = SENSOR_POINTS.find((point) => isCriticalPoint(point, latest));
+  const criticalPoint = SENSOR_POINTS.find((point) => isDominantPoint(point, latest));
 
   return (
     <section className="card schematic-panel">
@@ -45,32 +42,30 @@ export default function BridgeSchematic({ latest }) {
           <text x="8" y="88" fill="#9fb0d4" fontSize="3.1">left support / abutment</text>
           <text x="86" y="88" fill="#9fb0d4" fontSize="3.1">right bearing</text>
 
-          <line x1="27" y1="39" x2="27" y2="29" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.65" />
+          <line x1="27" y1="39" x2="27" y2="31" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.65" />
           <line x1="60" y1="39" x2="60" y2="27" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.65" />
-          <line x1="93" y1="39" x2="93" y2="29" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.65" />
-          <path d="M101 58 L101 50" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.7" />
-          <path d="M16 72 L25 52" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.7" />
+          <line x1="93" y1="39" x2="93" y2="31" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.65" />
+          <path d="M101 58 L101 62" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.7" />
+          <path d="M16 72 L27 68" stroke="#9fb0d4" strokeDasharray="1.5 1.5" opacity="0.7" />
 
           {SENSOR_POINTS.map((point) => {
             const status = latest.sensorStatuses[point.key];
-            const critical = isCriticalPoint(point, latest);
+            const critical = isDominantPoint(point, latest);
             const value = formatSensorValue(latest[point.key], point.unit);
-            const labelY = point.type === 'tilt' ? point.y + 7 : point.y - 8;
-            const labelX = point.key === 'supportDisplacement' ? point.x - 27 : point.x - 11;
 
             return (
               <g key={point.key} className={critical ? 'critical-sensor' : ''}>
                 {critical ? <circle cx={point.x} cy={point.y} r="6.2" fill="none" stroke={status.color} strokeWidth="1.8" opacity="0.95" /> : null}
                 <circle cx={point.x} cy={point.y} r="3.4" fill={status.color} stroke="#07101f" strokeWidth="1" />
-                <rect x={labelX} y={labelY - 5} width="31" height="10" rx="2" fill="#0b1220" stroke={status.color} strokeWidth="0.5" opacity="0.94" />
-                <text x={labelX + 2} y={labelY - 1.2} fill="#edf3ff" fontSize="2.7">{point.short}</text>
-                <text x={labelX + 2} y={labelY + 2.8} fill={status.color} fontSize="2.7">{value}</text>
+                <rect x={point.labelX} y={point.labelY - 5} width={point.labelWidth} height="10" rx="2" fill="#0b1220" stroke={status.color} strokeWidth="0.5" opacity="0.94" />
+                <text x={point.labelX + 2} y={point.labelY - 1.2} fill="#edf3ff" fontSize="2.7">{point.short}</text>
+                <text x={point.labelX + 2} y={point.labelY + 2.8} fill={status.color} fontSize="2.7">{value}</text>
               </g>
             );
           })}
 
-          <rect x="39" y="5" width="42" height="9" rx="2" fill={latest.overallStatus.color} opacity="0.95" />
-          <text x="42" y="10.7" fill="#07101f" fontSize="3.4">Most critical: {criticalPoint?.short}</text>
+          <rect x="36" y="5" width="49" height="9" rx="2" fill={latest.sensorStatuses[latest.dominantSensorKey]?.color ?? latest.overallStatus.color} opacity="0.95" />
+          <text x="39" y="10.7" fill="#07101f" fontSize="3.4">Most critical: {criticalPoint?.short}</text>
         </svg>
       </div>
       <p className="legend-text">Three strain gauges are located on the same girder near the left support, at midspan, and near the right support. Support displacement remains above the bearing; tilt remains on the abutment / retaining wall.</p>

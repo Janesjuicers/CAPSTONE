@@ -69,7 +69,7 @@ function DiagnosticGuide() {
       <h3>Diagnostic guide</h3>
       <ul>
         <li><strong>Green:</strong> readings are in normal simulated operating range.</li>
-        <li><strong>Amber:</strong> observe trend or schedule inspection if persistence continues.</li>
+        <li><strong>Amber:</strong> observe-only watch state; verify persistence before treating it as an issue.</li>
         <li><strong>Red:</strong> urgent inspection / critical anomaly rule has been triggered.</li>
         <li><strong>Grey:</strong> reserved for invalid telemetry or sensor fault readings.</li>
       </ul>
@@ -90,6 +90,9 @@ export default function App() {
       setHistory((existing) => {
         const latest = existing[existing.length - 1];
         const next = nextDataPoint(latest);
+        if (next.scenarioId !== latest.scenarioId) {
+          return [next];
+        }
         return [...existing.slice(-MAX_POINTS + 1), next];
       });
     }, 1000);
@@ -98,6 +101,7 @@ export default function App() {
   }, [isRunning]);
 
   const latest = history[history.length - 1];
+  const activeScenarioHistory = useMemo(() => history.filter((point) => point.scenarioId === latest.scenarioId), [history, latest.scenarioId]);
   const status = useMemo(() => evaluateStatus(latest), [latest]);
 
   return (
@@ -122,7 +126,7 @@ export default function App() {
                   const latestPoint = existing[existing.length - 1];
                   const nextScenarioIndex = (scenarios.findIndex((s) => s.id === latestPoint.scenarioId) + 1) % scenarios.length;
                   const jumped = jumpToScenario(latestPoint, nextScenarioIndex);
-                  return [...existing.slice(-MAX_POINTS + 1), jumped];
+                  return [jumped];
                 })
               }
             >
@@ -144,7 +148,7 @@ export default function App() {
         <main className="tab-content">
           <section className="metrics-grid overview-metrics">
             <MetricCard title="Overall Bridge Condition" value={status.label} unit={status.action} tone={toneFromTraffic(status.key)} />
-            <MetricCard title="Critical Strain" value={latest.criticalStrain.toFixed(1)} unit={`με · ${latest.criticalLocation}`} tone={toneFromTraffic(latest.sensorStatuses.strainMidspan.key)} />
+            <MetricCard title="Critical Strain" value={latest.criticalStrain.toFixed(1)} unit={`με · ${latest.criticalLocation}`} tone={toneFromTraffic(latest.sensorStatuses[latest.criticalSensorKey].key)} />
             <MetricCard title="Support Displacement Above Bearing" value={latest.supportDisplacement.toFixed(3)} unit="mm" tone={toneFromTraffic(latest.sensorStatuses.supportDisplacement.key)} />
             <MetricCard title="Abutment / Wall Tilt" value={latest.abutmentTilt.toFixed(3)} unit="°" tone={toneFromTraffic(latest.sensorStatuses.abutmentTilt.key)} />
           </section>
@@ -161,7 +165,7 @@ export default function App() {
           <section className="primary-grid">
             <section className="mini-charts-grid">
               <LiveChart
-                history={history}
+                history={activeScenarioHistory}
                 title="Critical Strain Over Time"
                 subtitle="Maximum of left support, midspan, and right support gauges"
                 dataKey="criticalStrain"
@@ -169,7 +173,7 @@ export default function App() {
                 unit="με"
               />
               <LiveChart
-                history={history}
+                history={activeScenarioHistory}
                 title="Support Displacement Above Bearing"
                 subtitle="Relative support movement trend"
                 dataKey="supportDisplacement"
@@ -177,7 +181,7 @@ export default function App() {
                 unit="mm"
               />
               <LiveChart
-                history={history}
+                history={activeScenarioHistory}
                 title="Abutment / Wall Tilt Over Time"
                 subtitle="Abutment and retaining wall drift"
                 dataKey="abutmentTilt"
