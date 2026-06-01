@@ -143,9 +143,16 @@ body {
 
 .chart-panel header p,
 .table-panel header p {
-  margin: 0.25rem 0 0.5rem;
+  margin: 0.25rem 0 0.35rem;
   color: #afc0e3;
   font-size: 0.85rem;
+}
+
+.chart-context {
+  display: inline-flex;
+  color: #83b5ff;
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .chart-wrap {
@@ -555,7 +562,7 @@ th {
 .scenario-progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #2dcf85, #f7b731, #ff7b59);
+  background: linear-gradient(90deg, #2dcf85, #68f8d8, #4da3ff);
   transition: width 220ms linear;
 }
 
@@ -642,7 +649,7 @@ th {
 }
 
 .critical-row {
-  background: rgba(247, 183, 49, 0.08);
+  background: rgba(131, 181, 255, 0.09);
 }
 
 .sensors-images {

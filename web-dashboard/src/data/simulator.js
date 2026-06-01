@@ -1,6 +1,6 @@
-export const MAX_POINTS = 48;
+export const MAX_POINTS = 34;
 
-const DEFAULT_POINTS = 24;
+const DEFAULT_POINTS = 22;
 const SCENARIOS = [
   { id: 'baseline', label: 'Scenario 1: Normal Baseline', durationSec: 26 },
   { id: 'load_event', label: 'Scenario 2: Load Event (Normal Transient)', durationSec: 18 },
@@ -13,7 +13,7 @@ const LOOP_SECONDS = SCENARIOS.reduce((sum, scenario) => sum + scenario.duration
 const TRAFFIC = {
   grey: { key: 'grey', label: 'Grey', action: 'Sensor fault / invalid reading', color: '#8d96a8', rank: 0 },
   green: { key: 'green', label: 'Green', action: 'Normal', color: '#2dcf85', rank: 1 },
-  amber: { key: 'amber', label: 'Amber', action: 'Observe / schedule inspection', color: '#f7b731', rank: 2 },
+  amber: { key: 'amber', label: 'Amber', action: 'Observe only / verify persistence', color: '#f7b731', rank: 2 },
   red: { key: 'red', label: 'Red', action: 'Urgent inspection / critical anomaly', color: '#ff4d4f', rank: 3 }
 };
 
@@ -22,7 +22,15 @@ function clamp(value, min, max) {
 }
 
 function stableNoise(tick, phase = 0, magnitude = 1) {
-  return (Math.sin((tick + phase) * 1.73) * 0.55 + Math.sin((tick + phase) * 0.41) * 0.45) * magnitude;
+  return (Math.sin((tick + phase) * 1.19) * 0.42 + Math.sin((tick + phase) * 0.47) * 0.38 + Math.sin((tick + phase) * 2.11) * 0.2) * magnitude;
+}
+
+function smoothPulse(progress, risePoint = 0.34, fallPoint = 0.72) {
+  const rise = clamp(progress / risePoint, 0, 1);
+  const fall = clamp((1 - progress) / (1 - fallPoint), 0, 1);
+  const shapedRise = rise * rise * (3 - 2 * rise);
+  const shapedFall = fall * fall * (3 - 2 * fall);
+  return Math.min(shapedRise, shapedFall);
 }
 
 function getScenarioState(globalTick) {
@@ -66,42 +74,42 @@ function scenarioMetrics(state, globalTick) {
   }
 
   if (state.id === 'load_event') {
-    const approach = Math.sin(Math.PI * state.progress);
-    const recoveryTail = state.progress > 0.58 ? Math.exp(-(state.scenarioTick - state.durationSec * 0.58) / 3.2) * 0.18 : 0;
-    const vehiclePulse = Math.max(0, approach) + recoveryTail;
+    const vehiclePulse = smoothPulse(state.progress, 0.32, 0.7);
+    const recoveryTail = state.progress > 0.7 ? Math.exp(-(state.scenarioTick - state.durationSec * 0.7) / 2.5) * 0.08 : 0;
+    const transient = vehiclePulse + recoveryTail;
     return {
-      loadEvent: 'vehicle crossing - expected recovery',
-      strainLeft: 118 + vehiclePulse * 22 + stableNoise(globalTick, 2, 1.1),
-      strainMidspan: 124 + vehiclePulse * 52 + stableNoise(globalTick, 5, 1.4),
-      strainRight: 116 + vehiclePulse * 20 + stableNoise(globalTick, 9, 1),
-      supportDisplacement: 0.66 + vehiclePulse * 0.2 + stableNoise(globalTick, 4, 0.012),
-      abutmentTilt: 0.112 + stableNoise(globalTick, 10, 0.002)
+      loadEvent: 'normal load response - transient response with expected recovery',
+      strainLeft: 117 + transient * 17 + stableNoise(globalTick, 2, 0.9),
+      strainMidspan: 123 + transient * 35 + stableNoise(globalTick, 5, 1.0),
+      strainRight: 116 + transient * 16 + stableNoise(globalTick, 9, 0.9),
+      supportDisplacement: 0.65 + transient * 0.12 + stableNoise(globalTick, 4, 0.01),
+      abutmentTilt: 0.112 + stableNoise(globalTick, 10, 0.0016)
     };
   }
 
   if (state.id === 'persistent_high') {
-    const ramp = 1 - Math.exp(-state.scenarioTick / 4.2);
-    const plateau = 0.92 + Math.sin(state.scenarioTick * 0.24) * 0.04;
+    const ramp = 1 - Math.exp(-state.scenarioTick / 3.8);
+    const plateau = 0.94 + Math.sin(state.scenarioTick * 0.18) * 0.025;
     const hold = ramp * plateau;
     return {
-      loadEvent: 'none - elevated reading persists',
-      strainLeft: 153 + hold * 34 + stableNoise(globalTick, 1, 1.2),
-      strainMidspan: 172 + hold * 44 + stableNoise(globalTick, 4, 1.4),
-      strainRight: 149 + hold * 31 + stableNoise(globalTick, 7, 1.1),
-      supportDisplacement: 0.82 + hold * 0.24 + stableNoise(globalTick, 12, 0.01),
-      abutmentTilt: 0.13 + stableNoise(globalTick, 14, 0.002)
+      loadEvent: 'none - elevated strain reading persists',
+      strainLeft: 150 + hold * 30 + stableNoise(globalTick, 1, 0.9),
+      strainMidspan: 169 + hold * 43 + stableNoise(globalTick, 4, 1.0),
+      strainRight: 147 + hold * 28 + stableNoise(globalTick, 7, 0.9),
+      supportDisplacement: 0.8 + hold * 0.2 + stableNoise(globalTick, 12, 0.009),
+      abutmentTilt: 0.13 + stableNoise(globalTick, 14, 0.0016)
     };
   }
 
   const drift = state.progress;
   const driftCurve = drift * drift * (3 - 2 * drift);
   return {
-    loadEvent: 'none - tilt drift accumulating',
-    strainLeft: 124 + stableNoise(globalTick, 2, 1.3),
-    strainMidspan: 132 + Math.sin(state.scenarioTick * 0.22) * 2.1 + stableNoise(globalTick, 4, 1.2),
-    strainRight: 123 + stableNoise(globalTick, 9, 1.1),
-    supportDisplacement: 0.78 + driftCurve * 0.22 + stableNoise(globalTick, 6, 0.012),
-    abutmentTilt: 0.16 + driftCurve * 0.27 + stableNoise(globalTick, 13, 0.002)
+    loadEvent: 'none - wall tilt drift accumulating',
+    strainLeft: 121 + stableNoise(globalTick, 2, 0.8),
+    strainMidspan: 127 + Math.sin(state.scenarioTick * 0.18) * 1.2 + stableNoise(globalTick, 4, 0.8),
+    strainRight: 121 + stableNoise(globalTick, 9, 0.8),
+    supportDisplacement: 0.74 + driftCurve * 0.17 + stableNoise(globalTick, 6, 0.009),
+    abutmentTilt: 0.165 + driftCurve * 0.285 + stableNoise(globalTick, 13, 0.0018)
   };
 }
 
@@ -151,7 +159,7 @@ function buildStatusDrivers(point, sensorStatuses) {
   const drivers = [];
 
   if (point.highStrainDurationSec >= 5 || point.criticalStrain >= 165) {
-    drivers.push({ label: 'Elevated strain duration', detail: `${point.highStrainDurationSec}s at or above watch threshold`, status: sensorStatuses.strainMidspan });
+    drivers.push({ label: 'Elevated strain duration', detail: `${point.highStrainDurationSec}s at or above watch threshold`, status: sensorStatuses[point.criticalSensorKey] });
   }
 
   if (point.supportPersistenceSec >= 5 || point.supportDisplacement >= 0.9) {
@@ -177,9 +185,9 @@ function detectAnomalies(point) {
   if (point.scenarioId === 'load_event') {
     return [
       {
-        code: 'NORMAL_TRANSIENT',
-        message: 'Vehicle crossing is producing a short strain/displacement rise that is recovering within the scenario window.',
-        severity: 34
+        code: 'NORMAL_LOAD_RESPONSE',
+        message: 'Normal load response: a short transient response is recovering as expected after the simulated vehicle crossing.',
+        severity: 24
       }
     ];
   }
@@ -207,22 +215,59 @@ function detectAnomalies(point) {
   return [];
 }
 
+function selectCriticalStrainLocation(strainLeft, strainMidspan, strainRight) {
+  const locations = [
+    { key: 'strainLeft', value: strainLeft, label: 'Left support strain gauge' },
+    { key: 'strainMidspan', value: strainMidspan, label: 'Midspan strain gauge' },
+    { key: 'strainRight', value: strainRight, label: 'Right support strain gauge' }
+  ];
+
+  return locations.reduce((highest, current) => (current.value > highest.value ? current : highest), locations[0]);
+}
+
+function selectDominantIssue(point, sensorStatuses) {
+  const candidates = [
+    { key: 'strainLeft', label: 'Left support strain', score: sensorStatuses.strainLeft.rank * 100 + Math.max(0, point.strainLeft - 120) },
+    { key: 'strainMidspan', label: 'Midspan strain', score: sensorStatuses.strainMidspan.rank * 100 + Math.max(0, point.strainMidspan - 120) },
+    { key: 'strainRight', label: 'Right support strain', score: sensorStatuses.strainRight.rank * 100 + Math.max(0, point.strainRight - 120) },
+    { key: 'supportDisplacement', label: 'Support displacement', score: sensorStatuses.supportDisplacement.rank * 100 + Math.max(0, point.supportDisplacement - 0.65) * 120 },
+    { key: 'abutmentTilt', label: 'Wall tilt', score: sensorStatuses.abutmentTilt.rank * 100 + Math.max(0, point.abutmentTilt - 0.11) * 520 }
+  ];
+
+  if (point.scenarioId === 'tilt_drift') {
+    candidates.find((candidate) => candidate.key === 'abutmentTilt').score += 90;
+    candidates.find((candidate) => candidate.key === 'supportDisplacement').score += 20;
+  }
+
+  if (point.scenarioId === 'persistent_high') {
+    candidates.find((candidate) => candidate.key === point.criticalSensorKey).score += 80;
+  }
+
+  if (point.scenarioId === 'baseline' || point.scenarioId === 'load_event') {
+    candidates.find((candidate) => candidate.key === point.criticalSensorKey).score += 30;
+  }
+
+  return candidates.reduce((dominant, current) => (current.score > dominant.score ? current : dominant), candidates[0]);
+}
+
 function createBridgePoint(globalTick = 0, previousPoint) {
   const scenario = getScenarioState(globalTick);
+  const previousInScenario = previousPoint?.scenarioId === scenario.id ? previousPoint : undefined;
   const metrics = scenarioMetrics(scenario, globalTick);
   const strainLeft = Number(metrics.strainLeft.toFixed(1));
   const strainMidspan = Number(metrics.strainMidspan.toFixed(1));
   const strainRight = Number(metrics.strainRight.toFixed(1));
-  const criticalStrain = Number(Math.max(strainLeft, strainMidspan, strainRight).toFixed(1));
+  const critical = selectCriticalStrainLocation(strainLeft, strainMidspan, strainRight);
+  const criticalStrain = Number(critical.value.toFixed(1));
   const supportDisplacement = Number(metrics.supportDisplacement.toFixed(3));
   const abutmentTilt = Number(clamp(metrics.abutmentTilt, 0.06, 0.48).toFixed(3));
-  const tiltDriftRate = Number(Math.max(0, abutmentTilt - (previousPoint?.abutmentTilt ?? abutmentTilt)).toFixed(3));
+  const tiltDriftRate = Number(Math.max(0, abutmentTilt - (previousInScenario?.abutmentTilt ?? abutmentTilt)).toFixed(3));
 
   const highStrain = criticalStrain >= 165;
   const supportHigh = supportDisplacement >= 0.9;
-  const highStrainDurationSec = highStrain ? (previousPoint?.highStrainDurationSec ?? 0) + 1 : 0;
-  const supportPersistenceSec = supportHigh ? (previousPoint?.supportPersistenceSec ?? 0) + 1 : 0;
-  const highReadingDurationSec = highStrain || supportHigh || abutmentTilt >= 0.22 ? (previousPoint?.highReadingDurationSec ?? 0) + 1 : 0;
+  const highStrainDurationSec = highStrain ? (previousInScenario?.highStrainDurationSec ?? 0) + 1 : 0;
+  const supportPersistenceSec = supportHigh ? (previousInScenario?.supportPersistenceSec ?? 0) + 1 : 0;
+  const highReadingDurationSec = highStrain || supportHigh || abutmentTilt >= 0.22 ? (previousInScenario?.highReadingDurationSec ?? 0) + 1 : 0;
 
   const basePoint = {
     time: new Date(Date.now()).toLocaleTimeString([], { hour12: false }),
@@ -240,7 +285,8 @@ function createBridgePoint(globalTick = 0, previousPoint) {
     strainMidspan,
     strainRight,
     criticalStrain,
-    criticalLocation: criticalStrain === strainMidspan ? 'Midspan strain gauge' : criticalStrain === strainLeft ? 'Left support strain gauge' : 'Right support strain gauge',
+    criticalSensorKey: critical.key,
+    criticalLocation: critical.label,
     supportDisplacement,
     abutmentTilt,
     tiltDriftRate,
@@ -255,22 +301,25 @@ function createBridgePoint(globalTick = 0, previousPoint) {
   const sensorStatuses = buildSensorStatuses(pointWithSeverity);
   const overallStatus = strongestStatus([...Object.values(sensorStatuses), anomalySeverity >= 85 ? formatStatus('red') : anomalySeverity >= 65 ? formatStatus('amber') : formatStatus('green')]);
   const statusDrivers = buildStatusDrivers(pointWithSeverity, sensorStatuses);
+  const dominantIssue = selectDominantIssue(pointWithSeverity, sensorStatuses);
 
   return {
     ...pointWithSeverity,
     sensorStatuses,
     statusDrivers,
+    dominantSensorKey: dominantIssue.key,
+    dominantIssueLabel: dominantIssue.label,
     overallStatus,
     maintenanceLevel: overallStatus.action,
     maintenanceColor: overallStatus.color
   };
 }
 
-export function createInitialHistory(points = DEFAULT_POINTS, startTick = 0) {
+export function createInitialHistory(points = DEFAULT_POINTS, startTick = DEFAULT_POINTS - 1) {
   let previousPoint;
   return Array.from({ length: points }, (_, i) => {
-    const tick = startTick - (points - 1 - i);
-    const point = createBridgePoint(Math.max(0, tick), previousPoint);
+    const tick = Math.max(0, startTick - (points - 1 - i));
+    const point = createBridgePoint(tick, previousPoint);
     previousPoint = point;
     return point;
   });
