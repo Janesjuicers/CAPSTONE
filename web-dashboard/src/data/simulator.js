@@ -105,26 +105,33 @@ function scenarioMetrics(state, globalTick) {
   if (state.id === 'baseline') {
     return {
       loadEvent: 'none - stable operating baseline',
-      strainLeft: 112 + natural * 0.35 + localRipple * 0.2,
-      strainMidspan: 119 + stableNoise(globalTick, 6, 0.45),
-      strainRight: 110 + stableNoise(globalTick, 11, 0.35) - localRipple * 0.15,
-      supportDisplacement: 0.62 + stableNoise(globalTick, 3, 0.006),
-      abutmentTilt: 0.11 + stableNoise(globalTick, 8, 0.0007)
+      strainLeft: 112 + natural * 0.22 + localRipple * 0.08,
+      strainMidspan: 119 + stableNoise(globalTick, 6, 0.28),
+      strainRight: 110 + stableNoise(globalTick, 11, 0.22) - localRipple * 0.06,
+      supportDisplacement: 0.62 + stableNoise(globalTick, 3, 0.0035),
+      abutmentTilt: 0.11 + stableNoise(globalTick, 8, 0.00045)
     };
   }
 
   if (state.id === 'load_event') {
-    const firstTruck = bellPulse(state.progress, 0.32, 0.11);
-    const secondTruck = bellPulse(state.progress, 0.62, 0.12);
-    const recovery = state.progress > 0.72 ? Math.exp(-(state.progress - 0.72) * 12) * 0.08 : 0;
-    const transient = firstTruck * 0.95 + secondTruck + recovery;
+    const firstLeft = bellPulse(state.progress, 0.24, 0.075);
+    const firstMidspan = bellPulse(state.progress, 0.32, 0.085);
+    const firstRight = bellPulse(state.progress, 0.41, 0.075);
+    const secondLeft = bellPulse(state.progress, 0.54, 0.075);
+    const secondMidspan = bellPulse(state.progress, 0.63, 0.085);
+    const secondRight = bellPulse(state.progress, 0.72, 0.075);
+    const leftInfluence = firstLeft * 0.92 + secondLeft;
+    const midspanInfluence = firstMidspan * 0.94 + secondMidspan;
+    const rightInfluence = firstRight * 0.9 + secondRight;
+    const supportInfluence = firstRight * 0.55 + secondRight * 0.68 + firstMidspan * 0.18 + secondMidspan * 0.2;
+    const recovery = state.progress > 0.79 ? Math.exp(-(state.progress - 0.79) * 14) * 0.018 : 0;
     return {
-      loadEvent: 'normal transient/service load response - two representative heavy trucks crossing in sequence with expected recovery',
-      strainLeft: 116 + transient * 13 + stableNoise(globalTick, 2, 0.45),
-      strainMidspan: 122 + transient * 29 + stableNoise(globalTick, 5, 0.5),
-      strainRight: 115 + transient * 12 + stableNoise(globalTick, 9, 0.45),
-      supportDisplacement: 0.65 + transient * 0.095 + stableNoise(globalTick, 4, 0.006),
-      abutmentTilt: 0.112 + stableNoise(globalTick, 10, 0.0008)
+      loadEvent: 'normal two-truck crossing - left support responds first, midspan peaks highest, right support responds last, then recovers',
+      strainLeft: 116 + leftInfluence * 18 + stableNoise(globalTick, 2, 0.28),
+      strainMidspan: 122 + midspanInfluence * 34 + stableNoise(globalTick, 5, 0.32),
+      strainRight: 115 + rightInfluence * 19 + stableNoise(globalTick, 9, 0.28),
+      supportDisplacement: 0.65 + supportInfluence * 0.09 + recovery + stableNoise(globalTick, 4, 0.004),
+      abutmentTilt: 0.112 + stableNoise(globalTick, 10, 0.00055)
     };
   }
 
@@ -222,12 +229,25 @@ function buildStatusDrivers(point, sensorStatuses) {
   return drivers;
 }
 
+
+function describeStatusDriver(point, statusDrivers) {
+  if (!point) return 'awaiting data';
+  if (point.scenarioId === 'baseline') return 'normal baseline';
+  if (point.scenarioId === 'load_event') return 'service load response';
+  if (point.scenarioId === 'persistent_high') return 'midspan strain persistence';
+  if (point.scenarioId === 'tilt_drift') return 'abutment tilt drift';
+
+  const primaryDriver = statusDrivers?.[0];
+  return primaryDriver?.label?.toLowerCase() ?? 'normal baseline';
+}
+
 function detectAnomalies(point) {
   if (point.scenarioId === 'load_event') {
     return [
       {
         code: 'NORMAL_LOAD_RESPONSE',
-        message: 'Normal transient/service load response: two representative heavy trucks are crossing in sequence and the readings recover as expected.',
+        message: 'Normal service-load response.',
+        support: 'Two truck peaks pass and recover as expected.',
         severity: 24
       }
     ];
@@ -237,7 +257,8 @@ function detectAnomalies(point) {
     return [
       {
         code: 'CONTINUOUS_HIGH',
-        message: 'Midspan strain is the dominant elevated reading without a load event, so schedule inspection and verify sensor bonding/calibration.',
+        message: 'Sustained midspan strain.',
+        support: 'Schedule inspection and verify the gauge.',
         severity: 76
       }
     ];
@@ -248,7 +269,8 @@ function detectAnomalies(point) {
     return [
       {
         code: 'TILT_DRIFT',
-        message: 'Abutment / retaining wall tilt is the dominant abnormal signal and is drifting upward over time.',
+        message: 'Abutment tilt is drifting upward.',
+        support: 'Inspect the wall and bearing area.',
         severity
       }
     ];
@@ -344,12 +366,14 @@ function createBridgePoint(globalTick = 0, previousPoint) {
   const sensorStatuses = buildSensorStatuses(pointWithSeverity);
   const overallStatus = strongestStatus([...Object.values(sensorStatuses), anomalySeverity >= 85 ? formatStatus('red') : anomalySeverity >= 65 ? formatStatus('amber') : formatStatus('green')]);
   const statusDrivers = buildStatusDrivers(pointWithSeverity, sensorStatuses);
+  const statusDriverLabel = describeStatusDriver(pointWithSeverity, statusDrivers);
   const dominantIssue = selectDominantIssue(pointWithSeverity, sensorStatuses);
 
   return {
     ...pointWithSeverity,
     sensorStatuses,
     statusDrivers,
+    statusDriverLabel,
     dominantSensorKey: dominantIssue.key,
     dominantIssueLabel: dominantIssue.label,
     overallStatus,
@@ -388,18 +412,23 @@ export function evaluateStatus(latestPoint) {
       ...formatStatus('grey'),
       level: 'Awaiting data',
       text: 'Awaiting simulation data.',
-      currentAnomaly: 'No current telemetry point is available yet.'
+      currentAnomaly: 'Awaiting telemetry.',
+      currentAnomalyDetail: 'No current simulation point is available.',
+      statusDriverLabel: 'awaiting data'
     };
   }
 
   const topAnomaly = latestPoint.anomalies?.[0];
   const status = latestPoint.overallStatus ?? formatStatus('green');
-  const currentAnomaly = topAnomaly?.message ?? 'No active anomaly pattern; simulated readings are within normal monitoring limits.';
+  const currentAnomaly = topAnomaly?.message ?? 'No active anomaly pattern.';
+  const currentAnomalyDetail = topAnomaly?.support ?? 'Readings remain within normal monitoring limits.';
 
   return {
     ...status,
     level: `${status.label} - ${status.action}`,
     text: currentAnomaly,
-    currentAnomaly
+    currentAnomaly,
+    currentAnomalyDetail,
+    statusDriverLabel: latestPoint.statusDriverLabel ?? describeStatusDriver(latestPoint, latestPoint.statusDrivers)
   };
 }

@@ -732,3 +732,59 @@ th {
     flex: 1;
   }
 }
+
+.status-driver-pill {
+  display: inline-flex;
+  margin-top: 0.55rem !important;
+  padding: 0.26rem 0.55rem;
+  border: 1px solid rgba(131, 181, 255, 0.42);
+  border-radius: 999px;
+  background: rgba(77, 163, 255, 0.1);
+  color: #d7e4ff;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.sensor-technical-stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.sensor-technical-stack .threshold-guide {
+  padding: 0.8rem 0.9rem;
+}
+
+.sensor-technical-stack .threshold-row {
+  grid-template-columns: 1.18fr 0.62fr 1fr 0.86fr;
+  gap: 0.4rem;
+  padding: 0.36rem 0;
+}
+
+.live-readings-panel table {
+  margin-top: 0.5rem;
+}
+
+.live-readings-panel th,
+.live-readings-panel td {
+  padding: 0.44rem 0.5rem;
+}
+
+.sensors-images {
+  gap: 0.7rem;
+}
+
+.sensors-images .image-panel {
+  padding: 0.75rem;
+}
+
+.sensors-images .image-panel h3 {
+  font-size: 0.95rem;
+}
+
+.sensors-images .camera-frame {
+  margin-top: 0.45rem;
+}
+
+.sensors-images .camera-frame img {
+  height: 150px;
+}

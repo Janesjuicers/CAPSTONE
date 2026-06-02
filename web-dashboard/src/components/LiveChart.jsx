@@ -1,6 +1,6 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceDot, Label } from 'recharts';
 
-export default function LiveChart({ history, title, subtitle, dataKey, color, unit }) {
+export default function LiveChart({ history, title, subtitle, dataKey, color, unit, peakMarkers = [] }) {
   const latest = history[history.length - 1];
   const scenarioLabel = latest?.scenarioLabel ?? 'Awaiting scenario';
 
@@ -14,7 +14,7 @@ export default function LiveChart({ history, title, subtitle, dataKey, color, un
 
       <div className="chart-wrap mini-chart-wrap">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={history} margin={{ top: 8, right: 14, left: 0, bottom: 4 }}>
+          <LineChart data={history} margin={{ top: 18, right: 30, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
             <XAxis dataKey="scenarioTick" tick={{ fill: '#c6d2ed', fontSize: 10 }} minTickGap={18} label={{ value: 'seconds in active scenario', position: 'insideBottomRight', fill: '#8fa1c6', fontSize: 10 }} />
             <YAxis tick={{ fill: '#c6d2ed', fontSize: 10 }} width={42} domain={['auto', 'auto']} />
@@ -23,6 +23,11 @@ export default function LiveChart({ history, title, subtitle, dataKey, color, un
               labelFormatter={(_, payload) => payload?.[0]?.payload ? `${payload[0].payload.scenarioLabel} · t=${payload[0].payload.scenarioTick}s` : ''}
               formatter={(value) => [`${value} ${unit}`, title]}
             />
+            {peakMarkers.map((marker) => (
+              <ReferenceDot key={`${marker.scenarioTick}-${marker.value}`} x={marker.scenarioTick} y={marker.value} r={3.5} fill={color} stroke="#edf3ff" strokeWidth={1.2} ifOverflow="extendDomain">
+                <Label value={marker.label} position="top" fill="#d7e4ff" fontSize={10} />
+              </ReferenceDot>
+            ))}
             <Line type="linear" dataKey={dataKey} name={title} stroke={color} dot={false} activeDot={{ r: 4 }} strokeWidth={2.2} isAnimationActive={false} connectNulls={false} />
           </LineChart>
         </ResponsiveContainer>
