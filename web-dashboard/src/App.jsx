@@ -12,6 +12,33 @@ function toneFromTraffic(statusKey) {
   return 'safe';
 }
 
+
+function findHighestPoint(points, dataKey) {
+  if (!points.length) return undefined;
+  return points.reduce((highest, point) => (Number(point[dataKey]) > Number(highest[dataKey]) ? point : highest), points[0]);
+}
+
+function peakLabel(point, dataKey, unit) {
+  const decimals = unit === 'με' ? 1 : 3;
+  return `Peak ${Number(point[dataKey]).toFixed(decimals)} ${unit}`;
+}
+
+function createPeakMarkers(history, dataKey, unit) {
+  const latest = history[history.length - 1];
+  if (!latest || !['load_event', 'persistent_high'].includes(latest.scenarioId)) return [];
+
+  if (latest.scenarioId === 'load_event') {
+    const firstCrossing = findHighestPoint(history.filter((point) => point.scenarioProgress >= 0.16 && point.scenarioProgress <= 0.46), dataKey);
+    const secondCrossing = findHighestPoint(history.filter((point) => point.scenarioProgress >= 0.48 && point.scenarioProgress <= 0.78), dataKey);
+    return [firstCrossing, secondCrossing]
+      .filter(Boolean)
+      .map((point) => ({ scenarioTick: point.scenarioTick, value: point[dataKey], label: peakLabel(point, dataKey, unit) }));
+  }
+
+  const peak = findHighestPoint(history, dataKey);
+  return peak ? [{ scenarioTick: peak.scenarioTick, value: peak[dataKey], label: peakLabel(peak, dataKey, unit) }] : [];
+}
+
 function StatusBadge({ status }) {
   return (
     <span className={`traffic-badge traffic-${status.key}`}>
@@ -115,6 +142,9 @@ export default function App() {
   const latest = history[history.length - 1];
   const activeScenarioHistory = useMemo(() => history.filter((point) => point.scenarioId === latest.scenarioId), [history, latest.scenarioId]);
   const status = useMemo(() => evaluateStatus(latest), [latest]);
+  const criticalStrainMarkers = useMemo(() => createPeakMarkers(activeScenarioHistory, 'criticalStrain', 'με'), [activeScenarioHistory]);
+  const supportDisplacementMarkers = useMemo(() => createPeakMarkers(activeScenarioHistory, 'supportDisplacement', 'mm'), [activeScenarioHistory]);
+  const abutmentTiltMarkers = useMemo(() => createPeakMarkers(activeScenarioHistory, 'abutmentTilt', '°'), [activeScenarioHistory]);
 
   return (
     <div className="app-shell">
@@ -170,6 +200,7 @@ export default function App() {
               <p className="scenario-label">Traffic-light condition</p>
               <h2 style={{ color: status.color }}>{status.label}</h2>
               <p>{status.action}</p>
+              <p className="status-driver-pill">Driver: {status.statusDriverLabel}</p>
             </div>
             <StatusBadge status={status} />
           </section>
@@ -183,6 +214,7 @@ export default function App() {
                 dataKey="criticalStrain"
                 color="#4da3ff"
                 unit="με"
+                peakMarkers={criticalStrainMarkers}
               />
               <LiveChart
                 history={activeScenarioHistory}
@@ -191,6 +223,7 @@ export default function App() {
                 dataKey="supportDisplacement"
                 color="#68f8d8"
                 unit="mm"
+                peakMarkers={supportDisplacementMarkers}
               />
               <LiveChart
                 history={activeScenarioHistory}
@@ -199,6 +232,7 @@ export default function App() {
                 dataKey="abutmentTilt"
                 color="#ffa658"
                 unit="°"
+                peakMarkers={abutmentTiltMarkers}
               />
             </section>
 
@@ -207,7 +241,7 @@ export default function App() {
                 <h3>Current Anomaly State</h3>
                 <p className="risk-level" style={{ color: status.color }}>{status.label}</p>
                 <p>{status.currentAnomaly}</p>
-                <p className="small-muted">Load event: {latest.loadEvent}</p>
+                <p className="small-muted">{status.currentAnomalyDetail}</p>
               </article>
 
               <article className="card alert-panel">
@@ -219,7 +253,6 @@ export default function App() {
               </article>
 
               <WhyStatusPanel latest={latest} />
-              <ThresholdGuide />
             </section>
           </section>
         </main>
@@ -227,7 +260,10 @@ export default function App() {
         <main className="tab-content">
           <section className="bridge-sensors-grid">
             <BridgeSchematic latest={latest} />
-            <MemberTable latest={latest} />
+            <div className="sensor-technical-stack">
+              <MemberTable latest={latest} />
+              <ThresholdGuide />
+            </div>
           </section>
 
           <section className="image-grid sensors-images">
