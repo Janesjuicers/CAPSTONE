@@ -116,14 +116,61 @@ function ThresholdGuide() {
   );
 }
 
+
+function LoginScreen({ credentials, loginError, onCredentialsChange, onSubmit }) {
+  return (
+    <main className="login-shell">
+      <section className="login-card card" aria-labelledby="login-title">
+        <div className="login-brand">
+          <p className="eyebrow">VicRoads Concept Prototype</p>
+          <h1 id="login-title">Bridge Structural Health Dashboard</h1>
+          <p className="subtitle">Demo access screen for the bridge monitoring presentation prototype.</p>
+        </div>
+
+        <form className="login-form" onSubmit={onSubmit}>
+          <label htmlFor="username">Username</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            autoComplete="username"
+            value={credentials.username}
+            onChange={(event) => onCredentialsChange({ ...credentials, username: event.target.value })}
+          />
+
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={credentials.password}
+            onChange={(event) => onCredentialsChange({ ...credentials, password: event.target.value })}
+          />
+
+          {loginError ? <p className="login-error" role="alert">Invalid login. Please try again.</p> : null}
+
+          <button className="sign-in-button" type="submit">Sign in</button>
+        </form>
+
+        <p className="demo-login-note">Prototype only: this frontend demo does not provide real authentication.</p>
+      </section>
+    </main>
+  );
+}
+
 export default function App() {
+  // Prototype/demo-only login gate. This is not real authentication and must not be used for production access control.
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginCredentials, setLoginCredentials] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState(false);
   const [isRunning, setIsRunning] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [history, setHistory] = useState(() => createInitialHistory());
   const scenarios = useMemo(() => scenarioCatalog(), []);
 
   useEffect(() => {
-    if (!isRunning) return undefined;
+    if (!isAuthenticated || !isRunning) return undefined;
 
     const timer = setInterval(() => {
       setHistory((existing) => {
@@ -137,7 +184,7 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRunning]);
+  }, [isAuthenticated, isRunning]);
 
   const latest = history[history.length - 1];
   const activeScenarioHistory = useMemo(() => history.filter((point) => point.scenarioId === latest.scenarioId), [history, latest.scenarioId]);
@@ -145,6 +192,35 @@ export default function App() {
   const criticalStrainMarkers = useMemo(() => createPeakMarkers(activeScenarioHistory, 'criticalStrain', 'με'), [activeScenarioHistory]);
   const supportDisplacementMarkers = useMemo(() => createPeakMarkers(activeScenarioHistory, 'supportDisplacement', 'mm'), [activeScenarioHistory]);
   const abutmentTiltMarkers = useMemo(() => createPeakMarkers(activeScenarioHistory, 'abutmentTilt', '°'), [activeScenarioHistory]);
+
+  function handleLoginSubmit(event) {
+    event.preventDefault();
+    if (loginCredentials.username === 'username' && loginCredentials.password === 'password') {
+      setIsAuthenticated(true);
+      setLoginError(false);
+      setLoginCredentials((current) => ({ ...current, password: '' }));
+      return;
+    }
+
+    setLoginError(true);
+  }
+
+  function handleLogout() {
+    setIsAuthenticated(false);
+    setLoginError(false);
+    setLoginCredentials({ username: '', password: '' });
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <LoginScreen
+        credentials={loginCredentials}
+        loginError={loginError}
+        onCredentialsChange={setLoginCredentials}
+        onSubmit={handleLoginSubmit}
+      />
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -174,6 +250,7 @@ export default function App() {
             >
               Next Scenario
             </button>
+            <button className="run-toggle logout-button" onClick={handleLogout}>Logout</button>
           </div>
           <p className="clock">Last update: {latest.time}</p>
         </div>

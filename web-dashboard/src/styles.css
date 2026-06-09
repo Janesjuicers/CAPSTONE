@@ -884,3 +884,82 @@ th {
     height: 170px;
   }
 }
+
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+}
+
+.login-card {
+  width: min(100%, 460px);
+  padding: 1.6rem;
+  background:
+    linear-gradient(145deg, rgba(20, 33, 58, 0.94), rgba(10, 16, 29, 0.94)),
+    rgba(16, 23, 39, 0.88);
+  border-color: rgba(131, 181, 255, 0.36);
+}
+
+.login-brand h1 {
+  margin: 0.45rem 0;
+  font-size: 1.8rem;
+  line-height: 1.12;
+}
+
+.login-form {
+  margin-top: 1.35rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.login-form label {
+  color: #c7d6f2;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.login-form input {
+  width: 100%;
+  border: 1px solid rgba(131, 181, 255, 0.34);
+  border-radius: 10px;
+  background: rgba(7, 11, 20, 0.72);
+  color: #edf3ff;
+  font: inherit;
+  padding: 0.72rem 0.8rem;
+  outline: none;
+}
+
+.login-form input:focus {
+  border-color: #68f8d8;
+  box-shadow: 0 0 0 3px rgba(104, 248, 216, 0.14);
+}
+
+.sign-in-button {
+  margin-top: 0.25rem;
+  border: 1px solid rgba(104, 248, 216, 0.55);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1e6eb8, #114130);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.76rem 0.9rem;
+}
+
+.login-error {
+  margin: 0.15rem 0 0;
+  color: #ff9b84;
+  font-size: 0.9rem;
+}
+
+.demo-login-note {
+  margin: 1rem 0 0;
+  color: #8fa4cc;
+  font-size: 0.82rem;
+}
+
+.logout-button {
+  border-color: rgba(255, 155, 132, 0.58);
+  background: #432134;
+}
