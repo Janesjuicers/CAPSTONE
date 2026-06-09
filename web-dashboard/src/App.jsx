@@ -4,6 +4,7 @@ import LiveChart from './components/LiveChart';
 import MemberTable from './components/MemberTable';
 import BridgeSchematic from './components/BridgeSchematic';
 import { MAX_POINTS, THRESHOLD_GUIDE, createInitialHistory, evaluateStatus, jumpToScenario, nextDataPoint, scenarioCatalog } from './data/simulator';
+import { mockMonitoringStore } from './data/mockMonitoringStore';
 
 function toneFromTraffic(statusKey) {
   if (statusKey === 'red') return 'danger';
@@ -116,6 +117,100 @@ function ThresholdGuide() {
   );
 }
 
+
+
+function StoredRecordsPanel({ store }) {
+  const latestEvents = store.anomalyEventLog.slice(0, 3);
+  const latestInspection = store.inspectionHistory[0];
+  const latestMaintenance = store.maintenanceHistory[0];
+  const watchedChannels = store.sensorHistorySummary.channels.slice(0, 3);
+
+  return (
+    <section className="stored-records-section card" aria-labelledby="stored-records-title">
+      <header className="stored-records-header">
+        <div>
+          <p className="scenario-label">Mock database layer</p>
+          <h3 id="stored-records-title">Stored Asset & History Records</h3>
+          <p>
+            Frontend-only prototype records showing the type of database snapshot a deployed SHM monitoring platform could display.
+          </p>
+        </div>
+        <span className="mock-store-pill">No backend connected</span>
+      </header>
+
+      <div className="stored-records-grid">
+        <article className="stored-record-card asset-record">
+          <h4>{store.bridgeAsset.name}</h4>
+          <dl className="record-definition-list">
+            <div>
+              <dt>Asset ID</dt>
+              <dd>{store.bridgeAsset.assetId}</dd>
+            </div>
+            <div>
+              <dt>Structure</dt>
+              <dd>{store.bridgeAsset.structureType}</dd>
+            </div>
+            <div>
+              <dt>Location</dt>
+              <dd>{store.bridgeAsset.location}</dd>
+            </div>
+            <div>
+              <dt>Commissioned</dt>
+              <dd>{store.bridgeAsset.monitoringCommissioned}</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article className="stored-record-card sensor-summary-record">
+          <h4>Sensor history summary</h4>
+          <div className="summary-metrics-row">
+            <span><strong>{store.sensorHistorySummary.summaryWindow}</strong> window</span>
+            <span><strong>{store.sensorHistorySummary.uptimePercent}%</strong> uptime</span>
+            <span><strong>{store.sensorHistorySummary.sampleCount.toLocaleString()}</strong> samples</span>
+          </div>
+          <ul className="compact-record-list">
+            {watchedChannels.map((channel) => (
+              <li key={channel.id}>
+                <strong>{channel.id}</strong>
+                <span>{channel.location} · {channel.latestRange}</span>
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="stored-record-card event-log-record">
+          <h4>Recent anomaly/event log</h4>
+          <ul className="event-record-list">
+            {latestEvents.map((event) => (
+              <li key={event.eventId}>
+                <span className={`traffic-dot traffic-${event.severity}`} />
+                <div>
+                  <strong>{event.eventId}</strong>
+                  <p>{event.timestamp} · {event.title}</p>
+                  <span>{event.status}: {event.action}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="stored-record-card history-records">
+          <h4>Inspection & maintenance history</h4>
+          <div className="history-record-item">
+            <span className="record-type-label">Latest inspection</span>
+            <strong>{latestInspection.date} · {latestInspection.type}</strong>
+            <p>{latestInspection.finding}</p>
+          </div>
+          <div className="history-record-item">
+            <span className="record-type-label">Latest maintenance</span>
+            <strong>{latestMaintenance.date} · {latestMaintenance.workOrder}</strong>
+            <p>{latestMaintenance.activity}. {latestMaintenance.followUp}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  );
+}
 
 function LoginScreen({ credentials, loginError, onCredentialsChange, onSubmit }) {
   return (
@@ -342,6 +437,8 @@ export default function App() {
               <ThresholdGuide />
             </div>
           </section>
+
+          <StoredRecordsPanel store={mockMonitoringStore} />
 
           <section className="image-grid sensors-images">
             <article className="card image-panel">
